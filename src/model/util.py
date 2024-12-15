@@ -69,22 +69,6 @@ class FiLM(nn.Module):
         return g * self.norm(x) + b
 
 
-class SwiGLU(nn.Module):
-    def __init__(self, d_model, hidden_size=None):
-        super(SwiGLU, self).__init__()
-        if hidden_size is None:
-            hidden_size = 4 * d_model
-
-        self.gate = nn.Linear(d_model, hidden_size, bias=False)
-        self.hidden = nn.Linear(d_model, hidden_size, bias=False)
-        self.out = nn.Linear(hidden_size, d_model)
-
-    def forward(self, x):
-        return self.out(
-            F.silu(self.gate(x)) * self.hidden(x)
-        )
-
-
 class FlowMatchEmbedding(nn.Embedding):
     def __init__(self, vocab_size, d_emb, *args, sigma_min=1e-4, **kwargs):
         super(FlowMatchEmbedding, self).__init__(vocab_size, d_emb, *args, **kwargs)

@@ -8,16 +8,23 @@ from tqdm import tqdm
 from torch import nn
 from math import sqrt
 
-from .util import SwiGLU, FiLM, Attention, SinusoidalPosEmb, FlowMatchEmbedding
+from .util import FiLM, Attention, SinusoidalPosEmb, FlowMatchEmbedding
 
 
 class FiLMBlock(nn.Module):
     def __init__(self, d_model, d_t, n_heads, attn_dropout=0.0, ffn_dropout=0.0, norm_eps=1e-6, hidden_size=None):
         super(FiLMBlock, self).__init__()
+        if hidden_size is None:
+            hidden_size = 4 * d_model
+
         self.attn = Attention(d_model, n_heads, dropout=attn_dropout)
         self.attn_norm = FiLM(d_model, d_t, eps=norm_eps)
 
-        self.ffn = SwiGLU(d_model, hidden_size=hidden_size)
+        self.ffn = nn.Sequential(
+            nn.Linear(d_model, hidden_size),
+            nn.GELU(),
+            nn.Linear(hidden_size, d_model)
+        )
         self.ffn_norm = FiLM(d_model, d_t, eps=norm_eps)
         self.ffn_dropout = nn.Dropout(ffn_dropout)
 
@@ -56,7 +63,9 @@ class FlowMatchTransformer(nn.Module):
 
         self.t_model = nn.Sequential(
             SinusoidalPosEmb(d_t),
-            SwiGLU(d_t)
+            nn.Linear(d_t, 4 * d_t),
+            nn.GELU(),
+            nn.Linear(4 * d_t, d_t)
         )
 
         self.layers = nn.ModuleList([
