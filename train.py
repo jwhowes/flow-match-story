@@ -32,7 +32,9 @@ def train(
         for i, (tokens, clean_mask) in enumerate(dataloader):
             opt.zero_grad()
 
-            loss = model(tokens, clean_mask)
+            with accelerator.autocast():
+                loss = model(tokens, clean_mask)
+
             accelerator.backward(loss)
 
             opt.step()
