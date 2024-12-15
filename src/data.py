@@ -7,8 +7,11 @@ from random import random
 from torch.utils.data import Dataset
 from transformers import AutoTokenizer
 
+from . import accelerator
+
 
 class StoryDataset(Dataset):
+    @accelerator.main_process_first()
     def __init__(
             self, tokenizer_path="google-bert/bert-base-uncased", split="train", max_length=512,
             p_uncond=0.1, p_autoreg=0.7
