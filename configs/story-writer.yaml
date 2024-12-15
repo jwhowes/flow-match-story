@@ -1,0 +1,8 @@
+log_interval: 10
+dataset:
+  max_length: 128
+model:
+  d_model: 768
+  d_t: 768
+  n_layers: 12
+  n_heads: 12
