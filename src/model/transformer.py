@@ -1,6 +1,3 @@
-# TODO
-#   1. RoPE
-
 import torch
 import torch.nn.functional as F
 
@@ -80,7 +77,9 @@ class FlowMatchTransformer(nn.Module):
         L = tokens.shape[0]
 
         x_t = torch.randn(1, self.length, self.d_emb, device=tokens.device)
-        clean = F.pad(self.emb(tokens.unsqueeze(0)), (0, self.length - L), value=self.pad_token)
+
+        clean = torch.zeros(1, self.length, self.d_emb)
+        clean[:, :L] = self.emb(tokens.unsqueeze(0))
 
         if guidance_scale > 1.0:
             clean = torch.concatenate((
@@ -113,6 +112,12 @@ class FlowMatchTransformer(nn.Module):
                     x_t = (1 - self.sigma_offset * next_t) * x_0 + next_t * x_1
             else:
                 raise NotImplementedError
+
+        pred_tokens = self.pred_logits(x_t, ts[-1], clean[1].unsqueeze(0)).argmax(-1).squeeze()
+        return torch.concatenate((
+            tokens,
+            pred_tokens[L:]
+        ), dim=0)
 
     @torch.inference_mode()
     def pred_flow_guidance(self, x_t, t, clean, guidance_scale=2.5):
