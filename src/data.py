@@ -35,16 +35,15 @@ class StoryDataset(Dataset):
 
     def __getitem__(self, idx):
         tokens = self.tokenizer(
-            self.ds[idx]["text"], truncation=True, return_tensors="pt", add_special_tokens=False
+            self.ds[idx]["text"], truncation=True, return_tensors="pt"
         )["input_ids"][0]
 
         L = tokens.shape[0]
-
         r = random()
         clean_mask = torch.zeros(L)
         if r >= self.p_uncond:
             r -= self.p_uncond
-            num_clean = np.random.randint(0, L)
+            num_clean = np.random.randint(1, L)
             if r < self.p_autoreg:
                 clean_mask[:num_clean] = 1.0
             else:
