@@ -41,7 +41,7 @@ class StoryDataset(Dataset):
         clean_mask = torch.zeros(L)
         if r >= self.p_uncond:
             r -= self.p_uncond
-            num_clean = np.random.randint(1, L - 1)
+            num_clean = np.random.randint(0, L)
             if r < self.p_autoreg:
                 clean_mask[:num_clean] = 1.0
             else:
