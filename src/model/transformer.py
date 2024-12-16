@@ -89,18 +89,20 @@ class FlowMatchTransformer(nn.Module):
 
         ts = torch.linspace(0, 1, num_steps, device=tokens.device).unsqueeze(1)
         for i in tqdm(range(num_steps)):
-            pred_flow = self.pred_flow_guidance(x_t, ts[i], clean)
+            pred_flow = self.pred_flow_guidance(x_t, ts[i], clean, guidance_scale)
 
             if step == "euler":
                 x_t = x_t + dt * pred_flow
             elif step == "midpoint":
-                x_t = x_t + dt * self.pred_flow_guidance(x_t + 0.5 * dt * pred_flow, ts[i] + 0.5 * dt, clean)
+                x_t = x_t + dt * self.pred_flow_guidance(
+                    x_t + 0.5 * dt * pred_flow, ts[i] + 0.5 * dt, clean, guidance_scale
+                )
             elif step == "heun":
                 if i == num_steps - 1:
                     x_t = x_t + dt * pred_flow
                 else:
                     x_t = x_t + 0.5 * dt * (pred_flow + self.pred_flow_guidance(
-                        x_t + dt * pred_flow, ts[i + 1], clean
+                        x_t + dt * pred_flow, ts[i + 1], clean, guidance_scale
                     ))
             elif step == "stochastic":
                 x_1 = x_t + (1 - ts[i]).view(1, 1, 1) * pred_flow
@@ -113,7 +115,7 @@ class FlowMatchTransformer(nn.Module):
             else:
                 raise NotImplementedError
 
-        pred_tokens = self.pred_logits(x_t, ts[-1], clean[1].unsqueeze(0)).argmax(-1).squeeze()
+        pred_tokens = self.pred_logits(x_t, ts[-1], clean[-1].unsqueeze(0)).argmax(-1).squeeze()
         return torch.concatenate((
             tokens,
             pred_tokens[L:]
